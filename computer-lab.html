@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Basic Computer Operation Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: a classroom desk — task card on the left, the working computer (wall socket, monitor, CPU, printer, DVD) on the right */
+:root{
+  --wall:#dfe6ee; --desk:#c9a77c; --desk-edge:#a8865c; --panel:#ffffff; --ink:#1c2533; --muted:#5a6678;
+  --line:#c7d0dc; --accent:#1f5fae; --accent-ink:#ffffff; --good:#1c7c47; --good-bg:#e1f4e8;
+  --warn:#9a5b00; --warn-bg:#fff1d6; --glow:#ffcc33; --case:#2b2f36; --case-hi:#3a404a;
+  --ui:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --os:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  --doc:Cambria,Georgia,"Times New Roman",serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--wall);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.45}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--glow);outline-offset:2px}
+[hidden]{display:none!important}
+
+.top{background:var(--accent);color:var(--accent-ink);padding:10px max(16px,env(safe-area-inset-left,0px));display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.top h1{font-size:18px;margin:0}
+.top .sp{flex:1}
+.mods{display:flex;gap:6px;flex-wrap:wrap}
+.mod{border:1px solid rgba(255,255,255,.45);background:transparent;color:inherit;border-radius:999px;padding:3px 10px;font-size:12px}
+.mod.on{background:#fff;color:var(--accent);font-weight:700}
+.mod.done{background:rgba(255,255,255,.22)}
+
+.wrap{display:grid;grid-template-columns:minmax(260px,320px) 1fr;gap:16px;padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px));align-items:start}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}}
+
+.task{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;position:sticky;top:12px}
+.step-no{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.task h2{margin:0;font-size:22px;line-height:1.25;text-wrap:balance}
+.task p{margin:0}
+.bar{height:8px;background:var(--wall);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--good);width:0;transition:width .4s}
+.target-text{font-family:var(--doc);font-size:20px;background:var(--wall);padding:8px 10px;border-radius:6px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.b{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:8px 12px;min-height:40px}
+.b.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.msg{border-radius:6px;padding:10px 12px;font-weight:700}
+.msg.good{background:var(--good-bg);color:var(--good)}
+.msg.warn{background:var(--warn-bg);color:var(--warn)}
+.why{font-size:14px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+
+/* ---------- desk scene ---------- */
+.scene{display:grid;grid-template-columns:120px minmax(0,1fr) 150px;grid-template-areas:"socket monitor cpu" "printer printer disc";gap:16px 18px;align-items:end;background:linear-gradient(var(--wall) 70%,var(--desk) 70%);border-radius:12px;padding:18px;border:1px solid var(--line);position:relative}
+@media (max-width:700px){.scene{grid-template-columns:1fr 1fr;grid-template-areas:"monitor monitor" "socket cpu" "printer disc";background:var(--wall)}}
+.hot{position:relative;border-radius:8px}
+.guide .hot.next{box-shadow:0 0 0 4px var(--glow),0 0 18px 6px rgba(255,204,51,.7);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 2px var(--glow),0 0 6px 2px rgba(255,204,51,.4)}}
+@media (prefers-reduced-motion:reduce){.guide .hot.next{animation:none}}
+.lbl{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;font-weight:700}
+
+/* socket */
+.socketArea{grid-area:socket;align-self:start}
+.plate{width:100px;height:120px;background:#f6f7f9;border:1px solid #b9c1cc;border-radius:8px;margin:0 auto;position:relative;box-shadow:inset 0 -3px 0 #dde2e8}
+.switch{position:absolute;left:12px;top:20px;width:26px;height:44px;background:#fff;border:1px solid #9aa3ae;border-radius:4px;padding:0}
+.switch::after{content:"";position:absolute;left:3px;right:3px;top:3px;height:18px;background:#d6dbe1;border-radius:2px;transition:top .15s}
+.switch.on::after{top:21px;background:#c43b3b}
+.holes{position:absolute;right:12px;top:22px;width:42px;height:42px;display:grid;place-items:center}
+.holes span{position:absolute;width:6px;height:12px;background:#4b5260;border-radius:2px}
+.holes span:nth-child(1){top:4px;left:18px}.holes span:nth-child(2){bottom:6px;left:6px}.holes span:nth-child(3){bottom:6px;right:6px}
+.plug{position:absolute;width:30px;height:38px;background:#1c1f24;border-radius:6px 6px 10px 10px;border:0;padding:0;transition:all .3s}
+.plug::after{content:"";position:absolute;left:12px;top:36px;width:6px;height:70px;background:#1c1f24;border-radius:3px}
+.plug.out{right:-30px;top:78px;transform:rotate(25deg)}
+.plug.in{right:18px;top:24px}
+.lamp{position:absolute;left:21px;top:72px;width:9px;height:9px;border-radius:50%;background:#7b2b2b}
+.lamp.on{background:#ff4a4a;box-shadow:0 0 8px #ff4a4a}
+
+/* monitor */
+.monArea{grid-area:monitor}
+.bezel{background:#16181d;border-radius:12px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.screen{position:relative;aspect-ratio:16/10;width:100%;background:#000;overflow:hidden;border-radius:3px;font-family:var(--os);font-size:12px;color:#1b1b1b}
+.stand{width:22%;height:26px;margin:0 auto;background:linear-gradient(#2a2d33,#1c1e22)}
+.foot{width:40%;height:10px;margin:0 auto;background:#1c1e22;border-radius:6px 6px 2px 2px}
+.layer{position:absolute;inset:0}
+
+.boot{background:#000;display:grid;place-items:center;color:#cfd8e6;text-align:center}
+.spin{width:34px;height:34px;border:3px solid #2c66c8;border-top-color:transparent;border-radius:50%;margin:10px auto;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(1turn)}}
+
+.login{background:linear-gradient(135deg,#0b4aa2,#0a2e66);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.avatar{width:72px;height:72px;border-radius:50%;background:#dbe6f6;display:grid;place-items:center}
+.avatar svg{width:44px;height:44px}
+.login .who{font-size:20px;font-weight:600}
+.pw{display:flex}
+.pw input{width:170px;height:30px;border:2px solid #fff;padding:0 8px;font-size:14px}
+.pw button{width:34px;border:0;background:#2c66c8;color:#fff;font-size:16px}
+.login small{opacity:.85}
+
+.desk{background:radial-gradient(circle at 70% 40%,#2f7fd6,#0e3f88 70%)}
+.icons{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+.dicon{width:72px;background:transparent;border:1px solid transparent;color:#fff;font-size:11px;padding:4px;display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:3px;text-shadow:0 1px 2px #000}
+.dicon:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.35)}
+.ico{width:28px;height:24px;border-radius:3px}
+.ico.pc{background:linear-gradient(#9fd1ff,#4d8fd6);border:2px solid #dfefff}
+.ico.fold{background:#f3c74d;border-top:5px solid #e0a92a}
+.ico.word{background:#2b5797;color:#fff;font-weight:700;display:grid;place-items:center;font-size:14px}
+.ico.bin{background:#d9e3ee;border-radius:2px 2px 6px 6px}
+.ico.dvd{background:radial-gradient(circle,#fff 18%,#b9c6d6 20%,#e9eef5 60%);border-radius:50%;width:24px}
+.taskbar{position:absolute;left:0;right:0;bottom:0;height:30px;background:#141a24;display:flex;align-items:center;gap:6px;padding:0 6px;color:#fff}
+.startb{height:24px;border:0;background:transparent;color:#fff;padding:0 8px;display:flex;align-items:center;gap:6px;font-size:12px}
+.startb:hover,.startb.open{background:#2c3646}
+.win4{display:grid;grid-template-columns:7px 7px;gap:1px}.win4 i{width:7px;height:7px;background:#4fb2ff}
+.tbapp{height:24px;padding:0 8px;background:#26303f;border:0;color:#fff;font-size:11px;border-bottom:2px solid #4fb2ff}
+.clock{margin-left:auto;font-size:11px;text-align:right;line-height:1.1}
+.start{position:absolute;left:0;bottom:30px;width:230px;background:#1f2633;color:#fff;padding:8px;display:flex;flex-direction:column;gap:2px;box-shadow:0 0 12px rgba(0,0,0,.5)}
+.start h4{margin:4px 6px;font-size:11px;font-weight:400;opacity:.7}
+.sitem{border:0;background:transparent;color:#fff;text-align:left;padding:6px;display:flex;gap:8px;align-items:center;font-size:12px;border-radius:2px}
+.sitem:hover{background:#344055}
+.sitem .ico{width:20px;height:18px;font-size:11px}
+.powm{margin-left:24px;background:#283141;display:flex;flex-direction:column}
+
+.win{position:absolute;left:4%;top:4%;right:4%;bottom:calc(30px + 3%);background:#fff;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(0,0,0,.45);border:1px solid #6b7c93}
+.wtitle{height:26px;background:#2b5797;color:#fff;display:flex;align-items:center;padding-left:8px;gap:8px;font-size:12px}
+.wtitle.ex{background:#f3f3f3;color:#111;border-bottom:1px solid #ddd}
+.wtitle .t{flex:1;text-align:center}
+.wx{width:40px;height:26px;border:0;background:transparent;color:inherit;font-size:14px}
+.wx:hover{background:#e81123;color:#fff}
+
+.tabsr{display:flex;gap:2px;background:#2b5797;padding:0 6px}
+.tabsr button{border:0;background:transparent;color:#fff;font-size:11px;padding:4px 10px}
+.tabsr .file{background:#1e4479;font-weight:700}
+.tabsr .home{background:#f3f3f3;color:#111}
+.ribbon{background:#f3f3f3;border-bottom:1px solid #d5d5d5;display:flex;gap:12px;padding:6px 8px;flex-wrap:wrap;align-items:center}
+.grp{display:flex;gap:3px;align-items:center;padding-right:10px;border-right:1px solid #d5d5d5}
+.rb{min-width:26px;height:26px;border:1px solid #c8c8c8;background:#fff;font-size:13px;font-family:var(--doc);padding:0 6px}
+.rb:hover{background:#dbe8f8}
+.rb.on{background:#c5dcf5;border-color:#2b5797}
+.ribbon select{height:26px;font-size:12px}
+.sw{width:22px;height:22px;border:2px solid #fff;outline:1px solid #aaa;padding:0}
+.sw.on{outline:2px solid #111}
+.filemenu{position:absolute;left:6px;top:50px;background:#fff;border:1px solid #9aa;box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;flex-direction:column;z-index:3;min-width:150px}
+.filemenu button{border:0;background:#fff;text-align:left;padding:8px 12px;font-size:12px}
+.filemenu button:hover{background:#dbe8f8}
+.pagebg{flex:1;background:#e3e6ea;overflow:auto;padding:12px}
+.paper{background:#fff;max-width:520px;margin:0 auto;min-height:100%;padding:24px 34px;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.doc{outline:0;font-family:var(--doc);font-size:14px;min-height:30px;white-space:pre-wrap;color:#111;caret-color:#111}
+.doc:empty::before{content:"Click here and type…";color:#9aa}
+.wstatus{height:18px;background:#2b5797;color:#fff;font-size:10px;display:flex;gap:12px;align-items:center;padding:0 8px}
+
+.dlg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92%,360px);background:#fff;border:1px solid #7a8ba3;box-shadow:0 10px 30px rgba(0,0,0,.5);z-index:5;font-size:12px}
+.dlg .wtitle{background:#fff;color:#111;border-bottom:1px solid #ddd}
+.dlg .body{padding:12px;display:flex;flex-direction:column;gap:8px}
+.dlg .row{display:flex;gap:8px;align-items:center}
+.dlg .row label{width:70px}
+.dlg input,.dlg select{flex:1;height:26px;font-size:12px;padding:0 6px;min-width:0}
+.dlg .acts{display:flex;justify-content:flex-end;gap:6px}
+.dlg .acts button{min-width:70px;height:26px;border:1px solid #999;background:#eee;font-size:12px}
+.dlg .acts .go{background:#2b5797;color:#fff;border-color:#2b5797}
+.loc{display:flex;gap:6px;align-items:center;background:#f3f6fa;padding:6px;border:1px solid #dde}
+
+.exbody{flex:1;display:grid;grid-template-columns:120px 1fr;min-height:0}
+.nav{background:#fafafa;border-right:1px solid #e5e5e5;padding:6px 0;display:flex;flex-direction:column;overflow:auto}
+.nav button{border:0;background:transparent;text-align:left;font-size:11px;padding:5px 10px;display:flex;gap:6px;align-items:center}
+.nav button.on{background:#cce4f7}
+.nav .ico{width:16px;height:13px}
+.exaddr{font-size:11px;padding:4px 8px;border-bottom:1px solid #eee;display:flex;gap:8px;align-items:center}
+.exaddr .open{margin-left:auto;border:1px solid #bbb;background:#f5f5f5;font-size:11px;padding:2px 10px}
+.list{overflow:auto}
+.item{display:grid;grid-template-columns:22px 1fr 110px;gap:6px;align-items:center;width:100%;border:0;background:transparent;text-align:left;font-size:11px;padding:4px 8px}
+.item:hover{background:#e5f1fb}
+.item.sel{background:#cce4f7}
+.item .ico{width:18px;height:14px}
+.item .ty{color:#666}
+.shut{background:#0a5bc4;color:#fff;display:grid;place-items:center;text-align:center;font-size:18px}
+
+/* CPU */
+.cpuArea{grid-area:cpu}
+.tower{width:120px;height:250px;margin:0 auto;background:linear-gradient(90deg,var(--case),var(--case-hi) 60%,var(--case));border-radius:8px 8px 4px 4px;position:relative;box-shadow:0 8px 18px rgba(0,0,0,.3)}
+.bay{position:absolute;left:12px;right:12px;top:24px;height:22px;background:#1a1d22;border-radius:3px;border:1px solid #444}
+.tray{position:absolute;left:14px;right:14px;top:30px;height:14px;background:#222;border:1px solid #555;transition:transform .5s;z-index:1}
+.tray.open{transform:translate(-34px,18px) scale(1.15);background:#333}
+.tray .cd{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px;border-radius:50%;background:radial-gradient(circle,#555 12%,#ddd 14%,#f4f7fb 40%,#c4cfdc 70%);display:none}
+.tray.open .cd.in{display:block}
+.eject{position:absolute;right:16px;top:50px;width:22px;height:8px;background:#555;border:1px solid #777;border-radius:2px;padding:0}
+.pbtn{position:absolute;left:50%;top:150px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:#3d434d;border:2px solid #626a77;color:#9aa4b2;font-size:16px;padding:0;line-height:1}
+.pled{position:absolute;left:50%;top:194px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#123}
+.pled.on{background:#3ce06b;box-shadow:0 0 8px #3ce06b}
+.vents{position:absolute;left:22px;right:22px;bottom:20px;height:30px;background:repeating-linear-gradient(90deg,#1c1f24 0 3px,transparent 3px 7px)}
+
+/* printer */
+.prArea{grid-area:printer;display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap}
+.printer{width:200px;height:110px;background:linear-gradient(#f2f4f6,#d7dce2);border-radius:10px 10px 6px 6px;position:relative;border:1px solid #b8c0ca}
+.lcd{position:absolute;right:14px;top:14px;width:62px;height:20px;background:#183;color:#bff3c7;font-size:10px;display:grid;place-items:center;border-radius:2px;font-family:monospace}
+.lcd.off{background:#3a3f45;color:#3a3f45}
+.slot{position:absolute;left:20px;right:20px;bottom:22px;height:8px;background:#444;border-radius:2px}
+.sheet{position:absolute;left:34px;right:34px;bottom:22px;height:0;background:#fff;border:1px solid #ccc;overflow:hidden;transition:height 2s ease-out;border-radius:2px;padding:0;display:grid;place-items:start center}
+.sheet.out{height:96px}
+.sheet .mini{font-family:var(--doc);padding-top:10px}
+.prlab{font-size:11px;position:absolute;left:14px;top:16px;color:#556;letter-spacing:.1em}
+.handout{display:flex;flex-direction:column;align-items:center;gap:6px}
+.taken{background:#fff;border:1px solid #ccc;width:150px;height:100px;box-shadow:2px 3px 8px rgba(0,0,0,.2);display:grid;place-items:start center;padding-top:14px;transform:rotate(-4deg)}
+
+.discArea{grid-area:disc;display:flex;flex-direction:column;align-items:center}
+.disc{width:84px;height:84px;border-radius:50%;border:0;background:radial-gradient(circle,#c9a77c 12%,#555 13%,#ddd 15%,#f6f9fc 45%,#c4cfdc 75%,#e9eef5);box-shadow:0 2px 6px rgba(0,0,0,.3);font-size:9px;color:#334;padding:0}
+
+/* on-screen keyboard */
+.oskWrap{grid-column:1/-1}
+.osk{display:grid;gap:4px;background:#2a2f38;padding:8px;border-radius:8px;max-width:760px;margin:0 auto}
+.osk .r{display:flex;gap:4px;justify-content:center}
+.osk button{flex:1;max-width:52px;min-width:0;height:40px;border:0;border-radius:5px;background:#eef1f5;color:#111;font-size:15px;padding:0}
+.osk button.w{max-width:110px;flex:2;font-size:12px}
+.osk button.sp{max-width:300px;flex:6}
+.osk button.on{background:var(--glow)}
+
+.done-card{text-align:center}
+.done-card h2{color:var(--good)}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#1c2533;color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;max-width:90vw;z-index:20}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Basic Computer Operation</h1>
+  <div class="mods" id="mods"></div>
+  <span class="sp"></span>
+  <button class="mod" id="guideBtn" aria-pressed="true">Guide: On</button>
+</header>
+
+<main class="wrap guide" id="wrap">
+  <section class="task" aria-live="polite">
+    <div class="step-no" id="stepNo">Step 1</div>
+    <div class="bar"><i id="barFill"></i></div>
+    <h2 id="stepTitle"></h2>
+    <p id="stepText"></p>
+    <div class="target-text" id="stepTarget" hidden></div>
+    <div class="msg" id="msg" hidden></div>
+    <div class="btns">
+      <button class="b" id="speak">Read aloud</button>
+      <button class="b" id="oskBtn" aria-pressed="false">On-screen keyboard</button>
+      <button class="b" id="restartBtn">Start again</button>
+    </div>
+    <p class="why" id="stepWhy"></p>
+  </section>
+
+  <section class="scene" id="scene">
+    <!-- wall socket -->
+    <div class="socketArea">
+      <div class="plate hot" id="plate">
+        <button class="switch" id="sw" aria-label="Wall socket switch"></button>
+        <div class="lamp" id="lamp"></div>
+        <div class="holes"><span></span><span></span><span></span></div>
+        <button class="plug out" id="plug" aria-label="Power plug"></button>
+      </div>
+      <div class="lbl">Wall socket</div>
+    </div>
+
+    <!-- monitor -->
+    <div class="monArea">
+      <div class="bezel"><div class="screen" id="screen">
+        <div class="layer" id="sOff" style="background:#050505"></div>
+
+        <div class="layer boot" id="sBoot" hidden><div><div style="font-size:22px;letter-spacing:.06em">Lab OS</div><div class="spin"></div><div>Starting…</div></div></div>
+
+        <div class="layer login" id="sLogin" hidden>
+          <div class="avatar"><svg viewBox="0 0 24 24" fill="#2b5797"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></div>
+          <div class="who">Learner</div>
+          <form class="pw" id="pwForm"><input id="pw" type="password" placeholder="Password" autocomplete="off" aria-label="Password"><button aria-label="Sign in">→</button></form>
+          <small>Password: 1234</small>
+        </div>
+
+        <div class="layer desk" id="sDesk" hidden>
+          <div class="icons">
+            <button class="dicon hot" id="icPC"><span class="ico pc"></span>This PC</button>
+            <button class="dicon hot" id="icDocs"><span class="ico fold"></span>Documents</button>
+            <button class="dicon"><span class="ico bin"></span>Recycle Bin</button>
+          </div>
+
+          <!-- Word window -->
+          <div class="win" id="winWord" hidden>
+            <div class="wtitle"><span class="t" id="wTitle">Document1 - Word Processor</span><button class="wx hot" id="wClose" aria-label="Close Word">✕</button></div>
+            <div class="tabsr"><button class="file hot" id="fileBtn">File</button><button class="home">Home</button><button>Insert</button><button>Page Layout</button></div>
+            <div class="filemenu" id="fileMenu" hidden>
+              <button id="mSave" class="hot">Save As</button>
+              <button id="mPrint" class="hot">Print</button>
+              <button id="mClose">Close</button>
+            </div>
+            <div class="ribbon">
+              <div class="grp"><button class="rb hot" id="bSel" style="font-family:var(--os);font-size:11px">Select All</button></div>
+              <div class="grp">
+                <button class="rb hot" id="bB" title="Bold (Ctrl+B)"><b>B</b></button>
+                <button class="rb hot" id="bI" title="Italic (Ctrl+I)"><i>I</i></button>
+                <button class="rb hot" id="bU" title="Underline (Ctrl+U)"><u>U</u></button>
+                <select id="fSize" class="hot" aria-label="Font size"><option>11</option><option selected>14</option><option>20</option><option>26</option><option>36</option></select>
+              </div>
+              <div class="grp" id="swatches">
+                <button class="sw on" data-c="#111111" style="background:#111" aria-label="Black"></button>
+                <button class="sw" data-c="#c62828" style="background:#c62828" aria-label="Red"></button>
+                <button class="sw hot" data-c="#1b8a3c" style="background:#1b8a3c" aria-label="Green" id="swGreen"></button>
+                <button class="sw" data-c="#1f5fae" style="background:#1f5fae" aria-label="Blue"></button>
+              </div>
+            </div>
+            <div class="pagebg"><div class="paper"><div class="doc hot" id="doc" contenteditable="true" spellcheck="false"></div></div></div>
+            <div class="wstatus"><span>Page 1 of 1</span><span id="wWords">Words: 0</span></div>
+
+            <div class="dlg" id="dlgSave" hidden>
+              <div class="wtitle"><span class="t">Save As</span></div>
+              <div class="body">
+                <div class="loc"><span class="ico fold" style="width:16px;height:13px"></span>This PC › Documents</div>
+                <div class="row"><label for="fname">File name:</label><input id="fname" class="hot" autocomplete="off"></div>
+                <div class="row"><label>Save as type:</label><select><option>Word Document (*.docx)</option></select></div>
+                <div class="acts"><button class="go hot" id="saveGo">Save</button><button id="saveCancel">Cancel</button></div>
+              </div>
+            </div>
+            <div class="dlg" id="dlgPrint" hidden>
+              <div class="wtitle"><span class="t">Print</span></div>
+              <div class="body">
+                <div class="row"><label>Printer:</label><select><option>Lab Printer SG 400</option></select></div>
+                <div class="row"><label>Copies:</label><input type="number" value="1" min="1" max="1"></div>
+                <div class="row"><label>Pages:</label><select><option>All</option></select></div>
+                <div class="acts"><button class="go hot" id="printGo">Print</button><button id="printCancel">Cancel</button></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Explorer -->
+          <div class="win" id="winEx" hidden>
+            <div class="wtitle ex"><span class="t" id="exTitle">Documents</span><button class="wx hot" id="exClose" aria-label="Close File Explorer">✕</button></div>
+            <div class="exbody">
+              <div class="nav">
+                <button data-p="pc" class="hot" id="navPC"><span class="ico pc"></span>This PC</button>
+                <button data-p="docs" id="navDocs"><span class="ico fold"></span>Documents</button>
+                <button data-p="dvd" class="hot" id="navDVD"><span class="ico dvd" style="width:14px;height:14px"></span>DVD Drive (E:)</button>
+              </div>
+              <div style="display:flex;flex-direction:column;min-height:0">
+                <div class="exaddr"><span id="exPath">This PC › Documents</span><button class="open hot" id="exOpen">Open</button></div>
+                <div class="list" id="exList"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="start" id="startMenu" hidden>
+            <h4>Apps</h4>
+            <button class="sitem hot" id="appWord"><span class="ico word">W</span>Word Processor</button>
+            <button class="sitem" id="appEx"><span class="ico fold"></span>File Explorer</button>
+            <button class="sitem hot" id="pwrBtn"><span style="width:20px;text-align:center">⏻</span>Power</button>
+            <div class="powm" id="pwrMenu" hidden>
+              <button class="sitem">Sleep</button>
+              <button class="sitem hot" id="shutBtn">Shut down</button>
+              <button class="sitem">Restart</button>
+            </div>
+          </div>
+          <div class="taskbar">
+            <button class="startb hot" id="startBtn" aria-label="Start"><span class="win4"><i></i><i></i><i></i><i></i></span>Start</button>
+            <button class="tbapp" id="tbWord" hidden>Word</button>
+            <button class="tbapp" id="tbEx" hidden>Explorer</button>
+            <div class="clock" id="clock"></div>
+          </div>
+        </div>
+
+        <div class="layer shut" id="sShut" hidden><div><div class="spin" style="border-color:#fff;border-top-color:transparent"></div>Shutting down</div></div>
+      </div></div>
+      <div class="stand"></div><div class="foot"></div>
+      <div class="lbl">Monitor</div>
+    </div>
+
+    <!-- CPU -->
+    <div class="cpuArea">
+      <div class="tower">
+        <div class="bay"></div>
+        <button class="tray hot" id="tray" aria-label="DVD tray"><span class="cd" id="trayCd"></span></button>
+        <button class="eject hot" id="eject" aria-label="Eject button"></button>
+        <button class="pbtn hot" id="power" aria-label="CPU power button">⏻</button>
+        <div class="pled" id="pled"></div>
+        <div class="vents"></div>
+      </div>
+      <div class="lbl">CPU</div>
+    </div>
+
+    <!-- printer + printout -->
+    <div class="prArea">
+      <div>
+        <div class="printer">
+          <span class="prlab">PRINTER</span>
+          <div class="lcd off" id="lcd">Ready</div>
+          <div class="slot"></div>
+          <button class="sheet hot" id="sheet" aria-label="Printed page"><span class="mini" id="sheetMini"></span></button>
+        </div>
+        <div class="lbl">Printer</div>
+      </div>
+      <div class="handout" id="handout" hidden>
+        <div class="taken"><span class="mini" id="takenMini"></span></div>
+        <div class="lbl">Your printout</div>
+      </div>
+    </div>
+
+    <div class="discArea">
+      <button class="disc hot" id="disc" aria-label="DVD disc">DVD</button>
+      <div class="lbl" id="discLbl">Lesson DVD</div>
+    </div>
+
+    <div class="oskWrap" id="oskWrap" hidden><div class="osk" id="osk"></div></div>
+  </section>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const TEXT="India is My Country";
+const S={plugged:false,switchOn:false,pcOn:false,screen:"off",start:false,pwr:false,word:false,fileMenu:false,
+  docName:"Document1",saved:false,sel:false,fmt:{b:false,i:false,u:false,size:14,color:"#111111"},
+  printing:false,paperOut:false,taken:false,ex:false,exPath:"docs",exSel:null,tray:false,discIn:false,dvdOpened:false,openedFile:false,
+  mistakes:0,t0:Date.now()};
+
+const MODS=[{id:"power",name:"1 Switch on"},{id:"word",name:"2 Type"},{id:"save",name:"3 Save & print"},{id:"files",name:"4 Find file"},{id:"cd",name:"5 CD/DVD"},{id:"shutdown",name:"6 Shut down"}];
+const STEPS=[
+ {m:"power",t:"Insert the power plug",x:"Click the black power plug to push it into the wall socket.",why:"The computer gets electricity from the wall socket through the power cable.",hot:"#plug",done:()=>S.plugged},
+ {m:"power",t:"Switch on the socket",x:"Click the switch on the wall socket. The red light will glow.",why:"Always plug in first, then switch on.",hot:"#sw",done:()=>S.switchOn},
+ {m:"power",t:"Press the CPU power button",x:"Press the round power button on the front of the CPU.",why:"The CPU is the main box of the computer. The monitor shows what it is doing.",hot:"#power",done:()=>S.pcOn},
+ {m:"power",t:"Log in",x:"Type the password 1234 and press Enter (or click the arrow).",why:"A password keeps your files private.",hot:"#pw",done:()=>S.screen==="desk"},
+ {m:"word",t:"Open the Word Processor",x:"Click Start at the bottom-left of the screen, then click Word Processor.",why:"The Start menu lists all the programs on the computer.",hot:()=>S.start?"#appWord":"#startBtn",done:()=>S.word},
+ {m:"word",t:"Type a sentence",x:"Click on the white page and type exactly:",target:TEXT,why:"Use the Shift key for capital letters and the Space bar between words.",hot:"#doc",done:()=>norm($("doc").innerText)===TEXT},
+ {m:"word",t:"Select the text",x:"Select the whole sentence: drag over it with the mouse, press Ctrl + A, or click Select All.",why:"You must select text before you can change how it looks.",hot:"#bSel",done:()=>S.sel},
+ {m:"word",t:"Format the text",x:"Make the text Bold (B), Italic (I) and Underline (U). Change the size to 26 and the colour to green.",why:"Formatting makes headings stand out.",hot:()=>!S.fmt.b?"#bB":!S.fmt.i?"#bI":!S.fmt.u?"#bU":S.fmt.size!==26?"#fSize":"#swGreen",done:()=>S.fmt.b&&S.fmt.i&&S.fmt.u&&S.fmt.size===26&&S.fmt.color==="#1b8a3c"},
+ {m:"save",t:"Save the document",x:"Click File, then Save As. Type the file name sample and click Save.",why:"Saving keeps your work on the computer so you can open it later.",hot:()=>!$("dlgSave").hidden?($("fname").value.trim().toLowerCase()==="sample"?"#saveGo":"#fname"):S.fileMenu?"#mSave":"#fileBtn",done:()=>S.saved},
+ {m:"save",t:"Print the document",x:"Click File, then Print, then click the Print button.",why:"The printer puts your document on paper.",hot:()=>!$("dlgPrint").hidden?"#printGo":S.fileMenu?"#mPrint":"#fileBtn",done:()=>S.paperOut},
+ {m:"save",t:"Take your printout",x:"Wait for the page to come out, then click the paper to take it.",why:"Take the page gently from the output tray.",hot:"#sheet",done:()=>S.taken},
+ {m:"files",t:"Close the Word Processor",x:"Click the ✕ at the top-right corner of the Word window.",why:"Close programs you have finished using. Your work is already saved.",hot:"#wClose",done:()=>!S.word},
+ {m:"files",t:"Find your saved file",x:"Double-click Documents on the desktop. Then double-click sample (or click it and press Open).",why:"Saved files are kept in folders. Documents is the usual folder for letters and papers.",hot:()=>S.ex?"#exList .file-sample":"#icDocs",done:()=>S.openedFile},
+ {m:"cd",t:"Open the DVD tray",x:"Press the small eject button on the front of the CPU, just below the DVD slot.",why:"The DVD drive reads CDs and DVDs. The tray slides out when you press eject.",hot:"#eject",done:()=>S.tray},
+ {m:"cd",t:"Place the disc",x:"Click the Lesson DVD on the desk to put it in the tray, shiny side down.",why:"Hold a disc by its edges so you do not leave fingerprints.",hot:"#disc",done:()=>S.discIn},
+ {m:"cd",t:"Close the tray",x:"Click the tray (or press eject again) to push it back in.",why:"",hot:"#tray",done:()=>S.discIn&&!S.tray},
+ {m:"cd",t:"Open the DVD",x:"Close any open windows. Double-click This PC on the desktop, then double-click DVD Drive (E:).",why:"Each drive has a letter. C: is the hard disk, E: is the DVD drive here.",hot:()=>S.word?"#wClose":S.ex?(S.exPath==="pc"?"#exList .file-dvd":"#navPC"):"#icPC",done:()=>S.dvdOpened},
+ {m:"shutdown",t:"Shut down the computer",x:"Close all windows. Click Start, then Power, then Shut down.",why:"Shutting down properly protects your files. Never just pull out the plug.",hot:()=>S.ex?"#exClose":S.word?"#wClose":!S.start?"#startBtn":!S.pwr?"#pwrBtn":"#shutBtn",done:()=>S.screen==="off"&&!S.pcOn&&S.shutDone},
+ {m:"shutdown",t:"Switch off the socket",x:"After the screen goes dark, switch off the wall socket.",why:"Switch off at the socket to save electricity.",hot:"#sw",done:()=>!S.switchOn}
+];
+let step=0;
+const norm=s=>s.replace(/ /g," ").replace(/\s+/g," ").trim();
+
+function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>e.hidden=true,2600)}
+function say(t,kind){const m=$("msg");m.textContent=t;m.className="msg "+(kind||"good");m.hidden=!t}
+function wrong(t){S.mistakes++;toast(t)}
+
+/* ---------- render ---------- */
+function render(){
+  $("plug").className="plug hot "+(S.plugged?"in":"out");
+  $("sw").classList.toggle("on",S.switchOn);
+  $("lamp").classList.toggle("on",S.switchOn&&S.plugged);
+  $("pled").classList.toggle("on",S.pcOn);
+  $("lcd").classList.toggle("off",!(S.switchOn&&S.plugged));
+  for(const k of ["Off","Boot","Login","Desk","Shut"])$("s"+k).hidden=S.screen!==k.toLowerCase();
+  $("startMenu").hidden=!S.start;$("startBtn").classList.toggle("open",S.start);
+  $("pwrMenu").hidden=!S.pwr;
+  $("winWord").hidden=!S.word;$("tbWord").hidden=!S.word;
+  $("winEx").hidden=!S.ex;$("tbEx").hidden=!S.ex;
+  $("fileMenu").hidden=!S.fileMenu;
+  $("wTitle").textContent=S.docName+" - Word Processor";
+  const d=$("doc").style;d.fontWeight=S.fmt.b?"700":"400";d.fontStyle=S.fmt.i?"italic":"normal";d.textDecoration=S.fmt.u?"underline":"none";d.fontSize=S.fmt.size+"px";d.color=S.fmt.color;
+  $("bB").classList.toggle("on",S.fmt.b);$("bI").classList.toggle("on",S.fmt.i);$("bU").classList.toggle("on",S.fmt.u);
+  $("fSize").value=String(S.fmt.size);
+  document.querySelectorAll(".sw").forEach(b=>b.classList.toggle("on",b.dataset.c===S.fmt.color));
+  const w=norm($("doc").innerText);$("wWords").textContent="Words: "+(w?w.split(" ").length:0);
+  $("tray").classList.toggle("open",S.tray);$("trayCd").classList.toggle("in",S.discIn);
+  $("disc").style.visibility=S.discIn?"hidden":"visible";$("discLbl").style.visibility=S.discIn?"hidden":"visible";
+  $("sheet").classList.toggle("out",S.paperOut&&!S.taken);$("handout").hidden=!S.taken;
+  [$("sheetMini"),$("takenMini")].forEach(m=>{m.textContent=S.saved||S.printing?norm($("doc").innerText):"";Object.assign(m.style,{fontWeight:d.fontWeight,fontStyle:d.fontStyle,textDecoration:d.textDecoration,color:d.color,fontSize:"12px"})});
+  renderEx();
+  // task panel
+  const st=STEPS[step];
+  if(st){
+    $("stepNo").textContent=`Step ${step+1} of ${STEPS.length}`;
+    $("stepTitle").textContent=st.t;$("stepText").textContent=st.x;
+    $("stepTarget").hidden=!st.target;$("stepTarget").textContent=st.target||"";
+    $("stepWhy").textContent=st.why?("Why: "+st.why):"";$("stepWhy").hidden=!st.why;
+  }
+  $("barFill").style.width=(100*step/STEPS.length)+"%";
+  const cm=st?st.m:"done";
+  document.querySelectorAll(".mod[data-m]").forEach(b=>{const i=MODS.findIndex(x=>x.id===b.dataset.m),ci=MODS.findIndex(x=>x.id===cm);b.classList.toggle("on",b.dataset.m===cm);b.classList.toggle("done",ci===-1||i<ci)});
+  document.querySelectorAll(".hot.next").forEach(e=>e.classList.remove("next"));
+  if(st){const sel=typeof st.hot==="function"?st.hot():st.hot;const e=document.querySelector(sel);if(e)e.classList.add("next")}
+}
+function renderEx(){
+  const p=S.exPath;$("exTitle").textContent=p==="pc"?"This PC":p==="dvd"?"DVD Drive (E:)":"Documents";
+  $("exPath").textContent=p==="pc"?"This PC":p==="dvd"?"This PC › DVD Drive (E:)":"This PC › Documents";
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.dataset.p===p));
+  let items=[];
+  if(p==="docs"){items=[["fold","Adobe","File folder"],["fold","Images","File folder"],["fold","Projects","File folder"]];if(S.saved)items.push(["word","sample","Word Document","sample"])}
+  else if(p==="pc"){items=[["fold","Desktop","Folder"],["fold","Documents","Folder","docs"],["pc","Local Disk (C:)","Hard disk"],["dvd",S.discIn&&!S.tray?"DVD Drive (E:) Lesson DVD":"DVD Drive (E:)","DVD drive","dvd"]]}
+  else{items=S.discIn&&!S.tray?[["fold","AUDIO_TS","File folder"],["fold","VIDEO_TS","File folder"]]:[]}
+  const L=$("exList");L.innerHTML="";
+  if(p==="dvd"&&!items.length)L.innerHTML='<div style="padding:12px;color:#666">Please insert a disc into drive E:.</div>';
+  items.forEach(([ic,name,ty,key])=>{
+    const b=document.createElement("button");b.className="item"+(key?" file-"+key:"")+(S.exSel===name?" sel":"");
+    b.innerHTML=`<span class="ico ${ic}">${ic==="word"?"W":""}</span><span>${name}</span><span class="ty">${ty}</span>`;
+    if(ic==="word")b.querySelector(".ico").style.cssText="width:16px;height:14px;font-size:9px";
+    b.addEventListener("click",()=>{S.exSel=name;S.exSelKey=key;render()});
+    b.addEventListener("dblclick",()=>openItem(key));
+    L.appendChild(b);
+  });
+  if(p==="pc"||p==="dvd"){$("exList").querySelectorAll(".file-dvd").forEach(b=>b.classList.add("hot"))}
+  $("exList").querySelectorAll(".file-sample").forEach(b=>b.classList.add("hot"));
+}
+function openItem(key){
+  if(!key)return toast("Open is for files and drives in this lesson.");
+  if(key==="docs"){S.exPath="docs";S.exSel=null}
+  else if(key==="dvd"){S.exPath="dvd";S.exSel=null;if(S.discIn&&!S.tray){S.dvdOpened=true}else toast(S.tray?"Close the DVD tray first.":"The drive is empty. Insert the Lesson DVD.")}
+  else if(key==="sample"){S.ex=false;S.word=true;S.openedFile=true;toast("Your saved file opened in the Word Processor.")}
+  check();
+}
+
+/* ---------- step logic ---------- */
+function check(){
+  render();
+  let moved=false;
+  while(STEPS[step]&&STEPS[step].done()){step++;moved=true}
+  if(moved){
+    if(step>=STEPS.length)return finish();
+    say("Well done! Next: "+STEPS[step].t);
+    if(autoSpeak)speak();
+  }
+  render();
+}
+function finish(){
+  render();
+  const mins=Math.max(1,Math.round((Date.now()-S.t0)/60000));
+  const task=document.querySelector(".task");
+  $("stepNo").textContent="Lesson complete";$("stepTitle").textContent="You can operate a computer!";
+  $("stepText").textContent=`You finished all ${STEPS.length} steps in about ${mins} minute${mins>1?"s":""} with ${S.mistakes} wrong click${S.mistakes===1?"":"s"}.`;
+  $("stepTarget").hidden=true;$("stepWhy").textContent="Steps you practised: switch on, log in, open a program, type, format, save, print, find a file, use a DVD, shut down.";
+  say("Lesson complete","good");$("barFill").style.width="100%";
+  document.querySelectorAll(".hot.next").forEach(e=>e.classList.remove("next"));
+  task.classList.add("done-card");
+}
+
+/* ---------- hardware ---------- */
+$("plug").onclick=()=>{
+  if(!S.plugged)S.plugged=true;
+  else if(S.pcOn)return wrong("Do not pull the plug while the computer is on.");
+  else if(S.switchOn)return wrong("Switch off the socket before you remove the plug.");
+  else S.plugged=false;
+  check()};
+$("sw").onclick=()=>{
+  if(!S.switchOn&&!S.plugged){wrong("Insert the power plug first.");return}
+  if(S.switchOn&&S.pcOn){wrong("Shut down the computer from the Start menu before switching off.");return}
+  S.switchOn=!S.switchOn;check()};
+$("power").onclick=()=>{
+  if(!S.plugged||!S.switchOn){wrong("There is no power. Plug in and switch on the wall socket first.");return}
+  if(S.pcOn){wrong("The computer is already on. To switch off, use Start → Power → Shut down.");return}
+  S.pcOn=true;S.screen="boot";check();
+  setTimeout(()=>{S.screen="login";check();setTimeout(()=>$("pw").focus({preventScroll:true}),50)},2200)};
+$("pwForm").onsubmit=e=>{e.preventDefault();
+  if($("pw").value==="1234"){S.screen="desk";$("pw").value="";check()}
+  else{wrong("Wrong password. Type 1234.");$("pw").value="";$("pw").focus()}};
+$("eject").onclick=()=>{
+  if(!S.pcOn&&!(STEPS[step]&&STEPS[step].m==="cd")){toast("Switch on the computer to use the DVD drive.");return}
+  S.tray=!S.tray;check()};
+$("tray").onclick=()=>{if(S.tray){S.tray=false;check()}else toast("Press the eject button to open the tray.")};
+$("disc").onclick=()=>{if(!S.tray){wrong("Open the DVD tray first. Press the eject button on the CPU.");return}S.discIn=true;check()};
+$("sheet").onclick=()=>{if(S.paperOut&&!S.taken){S.taken=true;check()}};
+
+/* ---------- desktop ---------- */
+$("startBtn").onclick=()=>{S.start=!S.start;S.pwr=false;check()};
+$("appWord").onclick=()=>{S.start=false;S.word=true;S.ex=false;check();setTimeout(()=>$("doc").focus(),50)};
+$("appEx").onclick=()=>{S.start=false;S.ex=true;S.exPath="docs";check()};
+$("pwrBtn").onclick=()=>{S.pwr=!S.pwr;check()};
+$("shutBtn").onclick=()=>{
+  if(S.word||S.ex){wrong("Close all windows before shutting down.");S.start=false;S.pwr=false;check();return}
+  S.start=false;S.pwr=false;S.screen="shut";check();
+  setTimeout(()=>{S.screen="off";S.pcOn=false;S.shutDone=true;check()},2400)};
+function dbl(el,fn){let t=0;el.addEventListener("click",()=>{const n=Date.now();if(n-t<450){fn();t=0}else{t=n;toast("Double-click to open (click twice quickly).")}})}
+dbl($("icDocs"),()=>{S.ex=true;S.exPath="docs";S.exSel=null;S.start=false;check()});
+dbl($("icPC"),()=>{S.ex=true;S.exPath="pc";S.exSel=null;S.start=false;check()});
+$("exClose").onclick=()=>{S.ex=false;check()};
+$("tbEx").onclick=()=>{};$("tbWord").onclick=()=>{};
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{S.exPath=b.dataset.p;S.exSel=null;if(b.dataset.p==="dvd")openItem("dvd");else check()});
+$("exOpen").onclick=()=>{if(!S.exSel)return toast("Click a file or drive first, then press Open.");openItem(S.exSelKey)};
+
+/* ---------- word ---------- */
+const doc=$("doc");
+$("wClose").onclick=()=>{
+  if(norm(doc.innerText)&&!S.saved){wrong("Save your document first (File → Save As).");return}
+  S.word=false;S.fileMenu=false;check()};
+$("fileBtn").onclick=()=>{S.fileMenu=!S.fileMenu;check()};
+$("mClose").onclick=()=>$("wClose").onclick();
+$("mSave").onclick=()=>{S.fileMenu=false;$("dlgSave").hidden=false;$("fname").value=S.docName;check();setTimeout(()=>{$("fname").focus();$("fname").select()},30)};
+$("saveCancel").onclick=()=>{$("dlgSave").hidden=true;check()};
+$("saveGo").onclick=()=>{
+  const n=$("fname").value.trim();
+  if(n.toLowerCase()!=="sample"){wrong("Type the file name: sample");$("fname").focus();return}
+  if(!norm(doc.innerText)){wrong("Type your sentence before saving.");return}
+  S.docName=n;S.saved=true;$("dlgSave").hidden=true;toast("Saved in Documents as "+n);check()};
+$("fname").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("saveGo").click()}});
+$("fname").addEventListener("input",render);
+$("mPrint").onclick=()=>{S.fileMenu=false;$("dlgPrint").hidden=false;check()};
+$("printCancel").onclick=()=>{$("dlgPrint").hidden=true;check()};
+$("printGo").onclick=()=>{
+  if(!norm(doc.innerText))return wrong("There is nothing to print yet.");
+  $("dlgPrint").hidden=true;S.printing=true;S.taken=false;$("lcd").textContent="Printing";check();
+  setTimeout(()=>{S.paperOut=true;check()},200);
+  setTimeout(()=>{$("lcd").textContent="Ready"},2300)};
+
+function selectedAll(){const s=getSelection();if(!s.rangeCount||!doc.contains(s.anchorNode))return false;const t=norm(s.toString());return t.length>0&&t===norm(doc.innerText)}
+document.addEventListener("selectionchange",()=>{if(S.word&&selectedAll()&&!S.sel){S.sel=true;check()}});
+$("bSel").addEventListener("mousedown",e=>e.preventDefault());
+$("bSel").onclick=()=>{if(!norm(doc.innerText))return toast("Type something first.");doc.focus();const r=document.createRange();r.selectNodeContents(doc);const s=getSelection();s.removeAllRanges();s.addRange(r);S.sel=true;check()};
+function fmtOk(){if(!S.sel){wrong("Select the text first.");return false}return true}
+for(const [id,k] of [["bB","b"],["bI","i"],["bU","u"]]){$(id).addEventListener("mousedown",e=>e.preventDefault());$(id).onclick=()=>{if(fmtOk()){S.fmt[k]=!S.fmt[k];check()}}}
+$("fSize").onchange=e=>{if(!fmtOk()){e.target.value=S.fmt.size;return}S.fmt.size=+e.target.value;check()};
+document.querySelectorAll(".sw").forEach(b=>{b.addEventListener("mousedown",e=>e.preventDefault());b.onclick=()=>{if(fmtOk()){S.fmt.color=b.dataset.c;check()}}});
+doc.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){e.preventDefault();return}
+  if((e.ctrlKey||e.metaKey)&&["b","i","u"].includes(e.key.toLowerCase())){e.preventDefault();if(fmtOk()){S.fmt[e.key.toLowerCase()]=!S.fmt[e.key.toLowerCase()];check()}}
+});
+doc.addEventListener("paste",e=>{e.preventDefault();toast("Please type the words yourself — that is the practice!")});
+doc.addEventListener("input",()=>{if(doc.innerHTML.includes("<")&&doc.children.length){const t=doc.innerText;doc.textContent=t;placeEnd()}if(STEPS[step]&&STEPS[step].m==="word"&&step<=5)S.sel=false;check()});
+function placeEnd(){const r=document.createRange();r.selectNodeContents(doc);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r)}
+
+/* ---------- on-screen keyboard ---------- */
+let shift=false,lastField=null;
+document.addEventListener("focusin",e=>{if(e.target===doc||e.target.id==="pw"||e.target.id==="fname")lastField=e.target});
+const ROWS=["1234567890","qwertyuiop","asdfghjkl","zxcvbnm"];
+function buildOsk(){
+  const o=$("osk");o.innerHTML="";
+  ROWS.forEach((r,i)=>{const row=document.createElement("div");row.className="r";
+    if(i===3)row.appendChild(key("Shift","w",()=>{shift=!shift;buildOsk()},shift));
+    [...r].forEach(c=>row.appendChild(key(shift?c.toUpperCase():c,"",()=>type(shift?c.toUpperCase():c))));
+    if(i===0)row.appendChild(key("⌫ Back","w",()=>{refocus();document.execCommand("delete")}));
+    if(i===2)row.appendChild(key("Enter","w",()=>{if(lastField&&lastField.id==="pw")$("pwForm").requestSubmit();else if(lastField&&lastField.id==="fname")$("saveGo").click()}));
+    o.appendChild(row)});
+  const r=document.createElement("div");r.className="r";
+  r.appendChild(key("Ctrl + A","w",()=>$("bSel").click()));
+  r.appendChild(key("Space","sp",()=>type(" ")));
+  r.appendChild(key(".","",()=>type(".")));o.appendChild(r);
+}
+function key(l,c,fn,on){const b=document.createElement("button");b.textContent=l;if(c)b.className=c;if(on)b.classList.add("on");b.addEventListener("mousedown",e=>e.preventDefault());b.onclick=fn;return b}
+function refocus(){const f=lastField&&!lastField.closest("[hidden]")?lastField:(S.screen==="login"?$("pw"):S.word?doc:null);if(f&&document.activeElement!==f){f.focus();if(f===doc)placeEnd()}return f}
+function type(ch){if(!refocus())return toast("Click where you want to type first.");document.execCommand("insertText",false,ch);if(shift){shift=false;buildOsk()}}
+$("oskBtn").onclick=e=>{const on=$("oskWrap").hidden;$("oskWrap").hidden=!on;e.currentTarget.setAttribute("aria-pressed",on);if(on)buildOsk()};
+
+/* ---------- misc ---------- */
+let autoSpeak=false;
+function speak(){try{const st=STEPS[step];if(!st)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(st.t+". "+st.x+(st.target?" "+st.target:""));u.lang="en-IN";u.rate=.92;speechSynthesis.speak(u)}catch(e){}}
+$("speak").onclick=()=>{autoSpeak=true;speak()};
+$("guideBtn").onclick=e=>{const on=!$("wrap").classList.toggle("guide")?false:true;e.currentTarget.textContent="Guide: "+(on?"On":"Off");e.currentTarget.setAttribute("aria-pressed",on)};
+$("restartBtn").onclick=()=>{location.hash?location.reload():location.reload()};
+function tick(){const d=new Date();$("clock").innerHTML=d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})+"<br>"+d.toLocaleDateString()}
+tick();setInterval(tick,30000);
+const mods=$("mods");MODS.forEach(m=>{const b=document.createElement("button");b.className="mod";b.dataset.m=m.id;b.textContent=m.name;b.onclick=()=>{location.hash=m.id;location.reload()};mods.appendChild(b)});
+
+/* ---------- station jump (#word, #save, #files, #cd, #shutdown) ---------- */
+function preset(h){
+  const on=()=>{S.plugged=true;S.switchOn=true;S.pcOn=true;S.screen="desk"};
+  const typed=()=>{doc.textContent=TEXT;S.sel=true;Object.assign(S.fmt,{b:true,i:true,u:true,size:26,color:"#1b8a3c"})};
+  if(h==="word"){on()}
+  else if(h==="save"){on();S.word=true;typed()}
+  else if(h==="files"){on();S.word=true;typed();S.saved=true;S.docName="sample";S.paperOut=true;S.taken=true}
+  else if(h==="cd"){on();typed();S.saved=true;S.docName="sample";S.taken=true;S.openedFile=true}
+  else if(h==="shutdown"){on();typed();S.saved=true;S.docName="sample";S.taken=true;S.openedFile=true;S.discIn=true;S.dvdOpened=true}
+}
+const h=location.hash.slice(1);if(MODS.some(m=>m.id===h))preset(h);
+if(h&&MODS.some(m=>m.id===h)){step=STEPS.findIndex(x=>x.m===h);say("Station: "+MODS.find(m=>m.id===h).name.slice(2))}
+render();
+</script>
+</body>
+</html>
